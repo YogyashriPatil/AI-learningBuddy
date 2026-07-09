@@ -175,20 +175,7 @@ Deploy using Section 3 above, then paste your public `*.streamlit.app`
 link here before submitting: `PASTE_YOUR_LIVE_APP_LINK_HERE`
 
 ---
-
-## 6. Submission Checklist
-
-- [ ] Topic selected and stated clearly
-- [ ] Persona description + system prompt included
-- [ ] All 5 reusable prompt templates included
-- [ ] Sample learning conversation (full, coherent) included
-- [ ] 5-question quiz with correct answers included
-- [ ] Reflection written in your own words, 300–400 words, with specific examples
-- [ ] Streamlit app deployed and link tested in a fresh/incognito browser tab
-- [ ] Everything compiled into one document or shared folder
-- [ ] Submitted via the assignment form: https://forms.gle/rLt4i4mmVpiyFQv79
-
-## 7. Feature Overview
+## 6. Feature Overview
 
 | Category | Features |
 |---|---|
@@ -200,13 +187,3 @@ link here before submitting: `PASTE_YOUR_LIVE_APP_LINK_HERE`
 | Progress | XP, badges, quiz accuracy tracking, dashboard metrics |
 | Data | Bookmarks with search, downloadable notes/quiz/transcripts, session state (no data leaves your session) |
 | Reliability | Centralized error handling around every Gemini call, empty-input guards, cached model client |
-
-## 8. Notes on Code Quality
-
-- Type hints and docstrings throughout `utils.py` and `prompts.py`.
-- Logic split into `config` / `prompts` / `utils` / `app` so each file has
-  one clear responsibility (PEP 8, modular structure).
-- All Gemini calls funnel through a single `call_gemini()` wrapper with
-  try/except, so one bad response never crashes the app.
-- API key is read only from `st.secrets` or environment variables — never
-  hardcoded, per the Student Guide's explicit warning.
