@@ -13,9 +13,19 @@ Techniques used throughout:
                            internally, but told to only output the final,
                            clean answer (reasoning is never exposed to the
                            learner)
+
+CHANGE LOG (interactive quiz update):
+- prompt_quiz() now asks Gemini for strict JSON instead of free text, so
+  the quiz can be rendered as clickable options in the UI and graded
+  programmatically after the learner submits.
+- Added parse_quiz_json() + grade_quiz() helpers used by app.py.
 """
 
 from __future__ import annotations
+
+import json
+import re
+from typing import Any, Dict, List, Optional
 
 # ---------------------------------------------------------------------------
 # AI Buddy Persona (deliverable #2)
@@ -80,14 +90,29 @@ def prompt_example(topic: str) -> str:
 
 
 def prompt_quiz(topic: str, num_questions: int = 5) -> str:
-    """Template 3 — Generate a multiple-choice quiz."""
+    """Template 3 — Generate a multiple-choice quiz.
+
+    Returns STRICT JSON (no markdown fences, no prose before/after) so the
+    app can render each question as clickable radio options and grade the
+    learner's picks after they submit, instead of just dumping raw text.
+    """
     return _wrap(
         f"Create {num_questions} multiple-choice questions on '{topic}' for "
-        "a beginner. For each question, provide 4 options labeled A-D, "
-        "clearly mark the correct option, and give a one-sentence "
-        "explanation of why it's correct. Format as:\n"
-        "Q1. <question>\nA) ... B) ... C) ... D) ...\n"
-        "Answer: <letter> — <one-sentence explanation>"
+        "a beginner.\n\n"
+        "Respond with ONLY a valid JSON array — no markdown code fences, "
+        "no explanation before or after, nothing but the JSON itself. "
+        "Each array element must be an object with exactly these keys:\n"
+        '  "question"    -> string, the question text\n'
+        '  "options"     -> object with exactly keys "A", "B", "C", "D", '
+        "each mapped to a short answer-option string\n"
+        '  "correct"     -> string, one of "A", "B", "C", "D" — the '
+        "correct option's letter\n"
+        '  "explanation" -> string, one short sentence on why that answer '
+        "is correct\n\n"
+        "Example of the exact shape required (structure only, do not reuse "
+        "this content):\n"
+        '[{"question": "...", "options": {"A": "...", "B": "...", '
+        '"C": "...", "D": "..."}, "correct": "B", "explanation": "..."}]'
     )
 
 
@@ -134,6 +159,90 @@ def prompt_ask_anything(topic_context: str, question: str) -> str:
         f"They ask: \"{question}\". Answer helpfully and simply, relating "
         "back to the topic where relevant."
     )
+
+
+# ---------------------------------------------------------------------------
+# Quiz JSON parsing + grading helpers (used by the interactive Quiz Zone)
+# ---------------------------------------------------------------------------
+
+def parse_quiz_json(raw_text: str) -> Optional[List[Dict[str, Any]]]:
+    """Parse Gemini's quiz response into a list of question dicts.
+
+    Tolerant of stray ```json fences or leading/trailing prose, since
+    models occasionally add them despite instructions. Returns None if the
+    text can't be turned into a valid quiz structure.
+    """
+    if not raw_text:
+        return None
+
+    text = raw_text.strip()
+    # Strip ```json ... ``` or ``` ... ``` fences if present.
+    fence_match = re.search(r"```(?:json)?\s*(.*?)```", text, re.DOTALL)
+    if fence_match:
+        text = fence_match.group(1).strip()
+
+    # If there's stray prose around the array, grab the outermost [ ... ].
+    if not text.startswith("["):
+        bracket_match = re.search(r"\[.*\]", text, re.DOTALL)
+        if bracket_match:
+            text = bracket_match.group(0)
+
+    try:
+        data = json.loads(text)
+    except (json.JSONDecodeError, ValueError):
+        return None
+
+    if not isinstance(data, list) or not data:
+        return None
+
+    required_keys = {"question", "options", "correct", "explanation"}
+    valid_questions: List[Dict[str, Any]] = []
+    for item in data:
+        if not isinstance(item, dict) or not required_keys.issubset(item.keys()):
+            continue
+        options = item.get("options")
+        if not isinstance(options, dict) or not options:
+            continue
+        if item.get("correct") not in options:
+            continue
+        valid_questions.append(item)
+
+    return valid_questions or None
+
+
+def grade_quiz(
+    questions: List[Dict[str, Any]], learner_answers: Dict[int, str]
+) -> Dict[str, Any]:
+    """Compare learner's selected letters against correct answers.
+
+    `learner_answers` maps question index -> selected option letter
+    (e.g. {0: "B", 1: "A", ...}).
+
+    Returns a dict with the overall score and a per-question breakdown
+    that the UI can render as ✅ / ❌ with the correct answer + explanation.
+    """
+    breakdown = []
+    correct_count = 0
+    for i, q in enumerate(questions):
+        picked = learner_answers.get(i)
+        is_correct = picked == q["correct"]
+        if is_correct:
+            correct_count += 1
+        breakdown.append(
+            {
+                "question": q["question"],
+                "options": q["options"],
+                "picked": picked,
+                "correct_letter": q["correct"],
+                "is_correct": is_correct,
+                "explanation": q.get("explanation", ""),
+            }
+        )
+    return {
+        "correct_count": correct_count,
+        "total": len(questions),
+        "breakdown": breakdown,
+    }
 
 
 # ---------------------------------------------------------------------------
