@@ -1,0 +1,111 @@
+/* style.css — AI Learning Buddy custom styling
+   Injected via st.markdown(..., unsafe_allow_html=True) in app.py.
+   Uses CSS variables set per-theme so light/dark mode can reuse one file. */
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
+
+html, body, [class*="css"] {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.stApp {
+    background: var(--lb-bg-gradient);
+    transition: background 0.4s ease;
+}
+
+h1, h2, h3, .lb-heading {
+    font-family: 'Poppins', sans-serif !important;
+    color: var(--lb-text) !important;
+}
+
+/* ---- Glass card ---- */
+.lb-card {
+    background: var(--lb-card-bg);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid var(--lb-border);
+    border-radius: 18px;
+    padding: 1.4rem 1.6rem;
+    box-shadow: 0 8px 32px rgba(31, 20, 60, 0.08);
+    margin-bottom: 1rem;
+    animation: lb-fade-in 0.5s ease;
+}
+
+.lb-hero {
+    text-align: center;
+    padding: 2.2rem 1.5rem;
+    border-radius: 22px;
+    background: var(--lb-card-bg);
+    backdrop-filter: blur(14px);
+    border: 1px solid var(--lb-border);
+    margin-bottom: 1.5rem;
+    animation: lb-fade-in 0.6s ease;
+}
+
+.lb-hero h1 {
+    font-size: 2.3rem;
+    margin-bottom: 0.2rem;
+}
+
+.lb-hero p {
+    color: var(--lb-subtext);
+    font-size: 1.02rem;
+    margin: 0;
+}
+
+.lb-subtext {
+    color: var(--lb-subtext);
+}
+
+.lb-pill {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    background: var(--lb-accent-soft);
+    color: var(--lb-accent);
+    font-size: 0.78rem;
+    font-weight: 600;
+    margin-right: 0.4rem;
+    margin-bottom: 0.4rem;
+}
+
+.lb-badge {
+    display: inline-block;
+    padding: 0.35rem 0.85rem;
+    border-radius: 12px;
+    background: var(--lb-accent-soft);
+    border: 1px solid var(--lb-border);
+    color: var(--lb-text);
+    font-size: 0.85rem;
+    margin-right: 0.4rem;
+    margin-bottom: 0.4rem;
+}
+
+.lb-footer {
+    text-align: center;
+    color: var(--lb-subtext);
+    font-size: 0.82rem;
+    padding: 1.5rem 0 0.5rem 0;
+}
+
+@keyframes lb-fade-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Buttons */
+.stButton > button {
+    border-radius: 12px !important;
+    font-weight: 600 !important;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.stButton > button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(124, 58, 237, 0.25);
+}
+
+/* Sidebar */
+section[data-testid="stSidebar"] {
+    background: var(--lb-card-bg);
+    backdrop-filter: blur(10px);
+}
